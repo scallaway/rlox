@@ -28,7 +28,7 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) {
     // We need to handle the fact that `Vec<T>::get()` returns a
     // `Result<T, E>`, even though it's very unlikely we'll ever fall into the
     // error case here.
-    let instruction = chunk.code.get(offset).ok_or_else(|| {
+    let instruction = chunk.code.get(offset).unwrap_or_else(|| {
         println!(
             "Panic! Offset trying to get code out of bounds, offset: {}",
             offset
@@ -36,7 +36,7 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) {
         panic!();
     });
 
-    match instruction.unwrap() {
+    match instruction {
         OpCode::OpConstant(constant) => constant_instruction("OP_CONSTANT", chunk, *constant),
         OpCode::OpReturn => simple_instruction("OP_RETURN"),
         // NOTE: This is currently unreachable since we're just passing OpCodes
@@ -55,12 +55,12 @@ fn constant_instruction(name: &str, chunk: &Chunk, constant: usize) {
         constant
     );
 
-    let value = chunk.constants.values.get(constant).ok_or_else(|| {
+    let value = chunk.constants.values.get(constant).unwrap_or_else(|| {
         println!("ERROR: There was a problem retrieving the constant for debugging");
         panic!();
     });
 
-    Value::print(value.unwrap());
+    Value::print(value);
 
     print!("'\n");
 }
