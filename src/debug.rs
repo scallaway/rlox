@@ -18,6 +18,9 @@ pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
 fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     print!("{:0>4} ", offset);
 
+    // We need to handle the fact that `Vec<T>::get()` returns a
+    // `Result<T, E>`, even though it's very unlikely we'll ever fall into the
+    // error case here.
     let instruction = chunk.code.get(offset).ok_or_else(|| {
         println!(
             "Panic! Offset trying to get code out of bounds, offset: {}",
