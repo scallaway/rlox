@@ -8,17 +8,15 @@ use crate::{
 pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
     println!("== {} ==", name);
 
-    let mut offset: usize = 0;
-
-    while offset < chunk.code.len() {
-        offset = disassemble_instruction(chunk, offset);
+    for offset in 0..chunk.code.len() {
+        disassemble_instruction(chunk, offset);
     }
 }
 
 // NOTE: We return a `usize` here since it's much easier to deal with that in
 // `disassembleChunk` than an i64.
 /// Outputs the contents of a single instruction
-fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
+fn disassemble_instruction(chunk: &Chunk, offset: usize) {
     print!("{:0>4} ", offset);
 
     if offset > 0 && chunk.lines.get(&offset).unwrap() == chunk.lines.get(&(offset - 1)).unwrap() {
@@ -39,20 +37,18 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     });
 
     match instruction.unwrap() {
-        OpCode::OpConstant(constant) => {
-            constant_instruction("OP_CONSTANT", chunk, offset, *constant)
-        }
-        OpCode::OpReturn => simple_instruction("OP_RETURN", offset),
+        OpCode::OpConstant(constant) => constant_instruction("OP_CONSTANT", chunk, *constant),
+        OpCode::OpReturn => simple_instruction("OP_RETURN"),
         // NOTE: This is currently unreachable since we're just passing OpCodes
         // around - this might need to change in the future
         // _ => {
         //     println!("Unknown opcode {:?}", instruction.unwrap());
         //     return offset + 1;
         // }
-    }
+    };
 }
 
-fn constant_instruction(name: &str, chunk: &Chunk, offset: usize, constant: usize) -> usize {
+fn constant_instruction(name: &str, chunk: &Chunk, constant: usize) {
     print!(
         "{} {:>4} '",
         format!("{:width$}", name, width = 16),
@@ -67,13 +63,8 @@ fn constant_instruction(name: &str, chunk: &Chunk, offset: usize, constant: usiz
     Value::print(value.unwrap());
 
     print!("'\n");
-
-    // NOTE: I have a feeling that this being 2 is going to cause a panic
-    return offset + 1;
 }
 
-fn simple_instruction(name: &str, offset: usize) -> usize {
+fn simple_instruction(name: &str) {
     println!("{}", name);
-
-    return offset + 1;
 }
