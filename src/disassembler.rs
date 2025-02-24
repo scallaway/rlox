@@ -9,55 +9,52 @@ impl<'a> Disassembler<'a> {
         println!("== {} ==", name);
         let mut offset = usize::MIN;
 
-        while offset < self.chunk.code.len() {
-            offset = self.disassemble_instruction(offset);
+        loop {
+            if let Some(new_offset) = self.disassemble_instruction(offset) {
+                if new_offset < self.chunk.code.len() {
+                    offset = new_offset
+                } else {
+                    break;
+                }
+            }
         }
     }
 
-    fn disassemble_instruction(&self, offset: usize) -> usize {
-        print!("{}", format!("{:0<4} ", offset));
+    fn disassemble_instruction(&self, offset: usize) -> Option<usize> {
+        print!("{}", format!("{:0>4} ", offset));
 
-        let instruction = self
-            .chunk
-            .code
-            .get(offset)
-            .expect(format!("Failed to get instruction at offset {}", offset).as_str());
+        // TODO: Handle this error case (not urgent since we're just disassembling here)
+        let instruction = self.chunk.code.get(offset)?;
 
-        match instruction {
-            OpCode::Constant(_) => self.constant_instruction("OP_CONSTANT", offset),
-            OpCode::Return => self.simple_instruction("OP_RETURN", offset),
+        // This might need sorting a bit, fairly verbose...
+        if offset > 0 && instruction.line == self.chunk.code.get(offset - 1)?.line {
+            print!("   | ");
+        } else {
+            print!("{:>4} ", instruction.line);
+        }
+
+        match instruction.code {
+            OpCode::Constant(constant_index) => {
+                self.constant_instruction("OP_CONSTANT", &constant_index)
+            }
+
+            OpCode::Return => self.simple_instruction("OP_RETURN"),
             _ => todo!(
                 "{}",
                 format!("Failed to parse instruction {:?}", instruction)
             ),
-        }
+        };
+
+        return Some(offset + 1);
     }
 
-    fn constant_instruction(&self, name: &str, offset: usize) -> usize {
-        let constant_opcode = self
-            .chunk
-            .code
-            .get(offset + 1)
-            .expect(format!("Failed to get code at offset: {}", offset + 1).as_str());
-
-        match constant_opcode {
-            OpCode::Constant(index) => {
-                print!("{:0<16} {:0<4}", name, index);
-                self.chunk.constants.print_value(index);
-                print!("\n");
-
-                offset + 2
-            }
-            _ => panic!(
-                "{}",
-                format!("Fetched incorrect OpCode at index: {}", offset + 1)
-            ),
-        }
+    fn constant_instruction(&self, name: &str, constant_index: &usize) {
+        print!("{:<16} {:<4}'", name, constant_index);
+        self.chunk.constants.print_value(&constant_index);
+        print!("'\n");
     }
 
-    fn simple_instruction(&self, name: &str, offset: usize) -> usize {
+    fn simple_instruction(&self, name: &str) {
         println!("{}", name);
-
-        offset + 1
     }
 }

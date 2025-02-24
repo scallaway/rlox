@@ -15,7 +15,8 @@ impl Values {
             "{:?}",
             self.values
                 .get(index.clone())
-                .expect(format!("Failed to get constant at index {}", index).as_str())
+                .expect(&format!("Failed to get constant at index {}", index))
+                .0
         )
     }
 }
