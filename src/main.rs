@@ -1,18 +1,25 @@
 use chunk::{Chunk, OpCode};
-use disassembler::Disassembler;
+use value::{Value, Values};
 
 mod chunk;
 mod disassembler;
 mod value;
+mod vm;
 
 fn main() {
+    let mut vm = vm::VM::init();
     let mut chunk = Chunk::init();
 
-    let constant_index = chunk.add_constant(value::Value(1.2));
-    chunk.write(OpCode::Constant(constant_index), 123);
+    chunk.write(
+        OpCode::Constant,
+        123,
+        Some(Values {
+            values: vec![Value(1.2)],
+        }),
+    );
 
-    chunk.write(OpCode::Return, 123);
+    chunk.write(OpCode::Negate, 123, None);
+    chunk.write(OpCode::Return, 123, None);
 
-    let disassembler = Disassembler { chunk: &chunk };
-    disassembler.disassemble("test chunk");
+    let _ = vm.interpret(&chunk);
 }

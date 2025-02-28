@@ -1,9 +1,12 @@
-use crate::value::{Value, Values};
+use crate::value::Values;
 
 // TODO: impl fmt::Display
 #[derive(Debug)]
 pub(crate) enum OpCode {
-    Constant(usize),
+    // I have a feeling this might need to take an index after all, but we'll see further down the
+    // line
+    Constant,
+    Negate,
     Return,
 }
 
@@ -11,30 +14,25 @@ pub(crate) enum OpCode {
 pub(crate) struct Instruction {
     pub(crate) code: OpCode,
     pub(crate) line: usize,
+    pub(crate) constants: Option<Values>,
 }
 
-// TODO: Are we able to store the constant with the instruction, rather than having an individual
-// array? Would make referencing the constant much easier (to look at later down the line).
 pub(crate) struct Chunk {
-    pub(crate) code: Vec<Instruction>,
-    pub(crate) constants: Values,
+    pub(crate) instruction: Vec<Instruction>,
 }
 
 impl Chunk {
     pub(crate) fn init() -> Self {
         Self {
-            code: Vec::new(),
-            constants: Values::init(),
+            instruction: Vec::new(),
         }
     }
 
-    pub(crate) fn write(&mut self, byte: OpCode, line: usize) {
-        self.code.push(Instruction { code: byte, line });
-    }
-
-    pub(crate) fn add_constant(&mut self, value: Value) -> usize {
-        self.constants.values.push(value);
-
-        self.constants.values.len() - 1
+    pub(crate) fn write(&mut self, byte: OpCode, line: usize, constants: Option<Values>) {
+        self.instruction.push(Instruction {
+            code: byte,
+            line,
+            constants,
+        });
     }
 }
