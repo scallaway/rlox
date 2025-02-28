@@ -1,6 +1,7 @@
 use crate::{
     chunk::{Chunk, Instruction},
-    Disassembler, OpCode, Value,
+    disassembler::Disassembler,
+    OpCode, Value,
 };
 
 pub(crate) struct VM<'a> {
@@ -9,6 +10,7 @@ pub(crate) struct VM<'a> {
     pub stack: Vec<Value>,
 }
 
+#[allow(dead_code)]
 pub(crate) enum InterpretError {
     Compile,
     Runtime,
@@ -31,8 +33,6 @@ impl<'a> VM<'a> {
 
     fn run(&mut self) -> Result<(), InterpretError> {
         loop {
-            let instruction = self.read_byte();
-
             if cfg!(debug_assertions) {
                 print!("          ");
                 for slot in self.stack.iter() {
@@ -51,10 +51,13 @@ impl<'a> VM<'a> {
                 disassembler.disassemble_instruction(self.ip.clone());
             }
 
-            match instruction.code {
+            let code = self.read_byte().code;
+
+            match code {
                 OpCode::Constant => {
                     // This could be improved by not using a Vec I think
-                    let constant = instruction
+                    let constant = self
+                        .read_byte()
                         .constants
                         .clone()
                         .expect("Constant pool for OpCode::Constant not initialised")
@@ -64,6 +67,10 @@ impl<'a> VM<'a> {
                         .clone();
 
                     self.stack.push(constant.clone());
+                }
+
+                OpCode::Add | OpCode::Subtract | OpCode::Multiply | OpCode::Divide => {
+                    self.binary_op(&code)
                 }
 
                 OpCode::Negate => {
@@ -82,6 +89,10 @@ impl<'a> VM<'a> {
 
                     return Ok(());
                 }
+                #[allow(unreachable_patterns)]
+                _ => {
+                    return Err(InterpretError::Runtime);
+                }
             };
 
             self.ip += 1;
@@ -96,8 +107,28 @@ impl<'a> VM<'a> {
             .get(self.ip)
             .expect(&format!("Failed to get code at IP position: {:?}", self.ip));
 
-        // self.ip += 1;
-
         &instruction
+    }
+
+    fn binary_op(&mut self, code: &OpCode) {
+        // Verify we have enough values on the stack to execute the operation
+        assert!(self.stack.len() >= 2);
+
+        let b = self.stack.pop().unwrap().0;
+        let a = self.stack.pop().unwrap().0;
+
+        match code {
+            OpCode::Add => self.stack.push(Value(a + b)),
+            OpCode::Subtract => self.stack.push(Value(a - b)),
+            OpCode::Multiply => self.stack.push(Value(a * b)),
+            OpCode::Divide => self.stack.push(Value(a / b)),
+            _ => panic!(
+                "{}",
+                format!(
+                    "Tried to execute a Binary Operation without the correct OpCode: {:?}",
+                    code
+                )
+            ),
+        };
     }
 }

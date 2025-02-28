@@ -1,11 +1,16 @@
 use crate::value::Values;
 
 // TODO: impl fmt::Display
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
+#[allow(dead_code)]
 pub(crate) enum OpCode {
     // I have a feeling this might need to take an index after all, but we'll see further down the
     // line
     Constant,
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
     Negate,
     Return,
 }

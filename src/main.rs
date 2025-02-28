@@ -18,6 +18,25 @@ fn main() {
         }),
     );
 
+    chunk.write(
+        OpCode::Constant,
+        123,
+        Some(Values {
+            values: vec![Value(3.4)],
+        }),
+    );
+
+    chunk.write(OpCode::Add, 123, None);
+    chunk.write(
+        OpCode::Constant,
+        123,
+        Some(Values {
+            values: vec![Value(5.6)],
+        }),
+    );
+
+    chunk.write(OpCode::Divide, 123, None);
+
     chunk.write(OpCode::Negate, 123, None);
     chunk.write(OpCode::Return, 123, None);
 

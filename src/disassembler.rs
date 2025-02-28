@@ -6,6 +6,7 @@ pub(crate) struct Disassembler<'a> {
 }
 
 impl<'a> Disassembler<'a> {
+    #[allow(dead_code)]
     pub(crate) fn disassemble(&self, name: &str) {
         println!("== {} ==", name);
         let mut offset = usize::MIN;
@@ -37,13 +38,14 @@ impl<'a> Disassembler<'a> {
         match instruction.code {
             OpCode::Constant => self.constant_instruction("OP_CONSTANT", &instruction),
 
+            OpCode::Add => self.simple_instruction("OP_ADD"),
+            OpCode::Subtract => self.simple_instruction("OP_SUBRACT"),
+            OpCode::Multiply => self.simple_instruction("OP_MULTIPLY"),
+            OpCode::Divide => self.simple_instruction("OP_DIVIDE"),
+
             OpCode::Negate => self.simple_instruction("OP_NEGATE"),
 
             OpCode::Return => self.simple_instruction("OP_RETURN"),
-            _ => todo!(
-                "{}",
-                format!("Failed to parse instruction {:?}", instruction)
-            ),
         };
 
         return Some(offset + 1);
